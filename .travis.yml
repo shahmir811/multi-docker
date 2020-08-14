@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t shahmir811/react-complex-app-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true shahmir811/react-complex-app-test npm test
+
+after_success:
+  - docker build -t shahmir811/react-complex-multi-client ./client
+  - docker build -t shahmir811/react-complex-multi-nginx ./nginx
+  - docker build -t shahmir811/react-complex-multi-server ./server
+  - docker build -t shahmir811/react-complex-multi-worker ./worker
+  # Login to Docker Hub via Docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker-hub
+  - docker image push shahmir811/react-complex-multi-client
+  - docker image push shahmir811/react-complex-multi-nginx
+  - docker image push shahmir811/react-complex-multi-server
+  - docker image push shahmir811/react-complex-multi-worker
