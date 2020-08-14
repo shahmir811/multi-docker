@@ -1,0 +1,65 @@
+version: '3'
+
+services:
+  postgres:
+    container_name: postgres
+    image: postgres
+    environment:
+      - POSTGRES_PASSWORD=postgres_password
+  redis:
+    container_name: redis
+    image: redis
+  nginx:
+    container_name: nginx
+    # Following line is the restart policy for docker container
+    restart: always
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile.dev
+    ports:
+      - '3050:80'
+    depends_on:
+      - api
+      - client
+  # api is the backend node server
+  api:
+    container_name: api
+    build:
+      context: ./server
+      dockerfile: Dockerfile.dev
+    depends_on:
+      - postgres
+    volumes:
+      # Inside container at /app, dont try to overwrite node_modules. Leave node_modules as it is
+      - /app/node_modules
+      - ./server:/app
+    environment:
+      - REDIS_HOST=redis
+      # 6379 is the default redis port. You can find it on dockerhub
+      - REDIS_PORT=6379
+      - PGUSER=postgres
+      - PGHOST=postgres
+      - PGDATABASE=postgres
+      - PGPASSWORD=postgres_password
+      - PGPPGPORT=5432
+  client:
+    container_name: client
+    # if you dont add following line, client (React app) will be exited with code 0
+    stdin_open: true
+    build:
+      context: ./client
+      dockerfile: Dockerfile.dev
+    volumes:
+      - /app/node_modules
+      - ./client:/app
+  worker:
+    container_name: worker
+    build:
+      context: ./worker
+      dockerfile: Dockerfile.dev
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - /app/node_modules
+      - ./worker:/app

@@ -1,0 +1,7 @@
+Build Image from Dockerfile.dev
+docker build -t react-complex-dev-app -f Dockerfile.dev .
+
+Build container from react-complex-dev-app image:
+docker container run -it --name react-complex-dev-app -p 3000:3000 -v /app/node_modules react-complex-dev-app
+
+
